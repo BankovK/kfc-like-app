@@ -1,0 +1,77 @@
+.table-header {
+  font-size: 50px;
+  text-align: center;
+}
+
+.order-table-wrapper {
+  width: 80%;
+  margin-left: 10%;
+  height: 70%;
+  overflow-y: scroll;
+}
+
+.order-table th {
+  position: sticky;
+  background-color: #bf1f1f;
+  top: 0;
+}
+
+.order-table tr {
+  text-align: center;
+}
+
+.order-table {
+  width: 100%;
+  font: 32px "Times New Roman";
+  border-collapse: collapse;
+}
+
+.new-order-button {
+  float: right;
+  font-size: 50px;
+  margin-top: 30px;
+  margin-right: 100px;
+}
+
+.form-wrapper h1 {
+  text-align: center;
+}
+
+.form-wrapper label {
+  display: block;
+}
+
+.form-wrapper .input-invalid {
+  background-color: red;
+}
+
+.form-wrapper input {
+  display: block;
+  box-shadow: 0 0 3px black;
+  margin: 10px;
+  font-size: 50px;
+}
+
+.form-wrapper small {
+  font-size: 25px;
+  color: red;
+}
+
+.form-wrapper button {
+  margin-top: 30px;
+  font-size: 50px;
+}
+
+.form-wrapper button:last-child {
+  float: right;
+}
+
+.form-wrapper {
+  font-size: 50px;
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-right: -50%;
+  transform: translate(-50%, -50%);
+}
