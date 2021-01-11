@@ -1,8 +1,12 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useContext } from "react"
+import Axios from "axios"
 import { useImmerReducer } from "use-immer"
 import { withRouter } from "react-router-dom"
+import DispatchContext from "../DispatchContext"
 
 function Register(props) {
+  const appDispatch = useContext(DispatchContext)
+
   const initialState = {
     username: {
       value: "",
@@ -103,9 +107,7 @@ function Register(props) {
       case "submitForm":
         if (
           !draft.username.isInvalid &&
-          // draft.username.isUnique &&
           !draft.email.isInvalid &&
-          // draft.email.isUnique &&
           !draft.password.isInvalid
         ) {
           draft.submitCount++
@@ -130,11 +132,51 @@ function Register(props) {
   }, [state.username.value])
 
   useEffect(() => {
+    if (state.username.checkCount) {
+      const request = Axios.CancelToken.source()
+      async function sendRequest() {
+        try {
+          const response = await Axios.post(
+            "/api/users/doesUsernameExist",
+            { username: state.username.value },
+            { cancelToken: request.token }
+          )
+          dispatch({ type: "usernameUniqueResults", value: response.data })
+        } catch (error) {
+          console.log("Request failed or was cancelled.")
+        }
+      }
+      sendRequest()
+      return () => request.cancel()
+    }
+  }, [state.username.checkCount])
+
+  useEffect(() => {
     if (state.email.value) {
       const delay = setTimeout(() => dispatch({ type: "emailAfterDelay" }), 800)
       return () => clearTimeout(delay)
     }
   }, [state.email.value])
+
+  useEffect(() => {
+    if (state.email.checkCount) {
+      const request = Axios.CancelToken.source()
+      async function sendRequest() {
+        try {
+          const response = await Axios.post(
+            "/api/users/doesEmailExist",
+            { email: state.email.value },
+            { cancelToken: request.token }
+          )
+          dispatch({ type: "emailUniqueResults", value: response.data })
+        } catch (error) {
+          console.log("Request failed or was cancelled.")
+        }
+      }
+      sendRequest()
+      return () => request.cancel()
+    }
+  }, [state.email.checkCount])
 
   useEffect(() => {
     if (state.password.value) {
@@ -148,30 +190,49 @@ function Register(props) {
 
   useEffect(() => {
     if (state.submitCount) {
-      localStorage.setItem("username", state.username.value)
-      props.setLoggedIn(true)
-      props.history.push("/")
+      const request = Axios.CancelToken.source()
+      async function sendRequest() {
+        try {
+          const response = await Axios.post(
+            "/api/users/register",
+            {
+              username: state.username.value,
+              email: state.email.value,
+              password: state.password.value
+            },
+            { cancelToken: request.token }
+          )
+          appDispatch({ type: "login", data: response.data })
+          props.history.push("/")
+        } catch (error) {
+          console.log("Request failed or was cancelled.")
+        }
+      }
+      sendRequest()
+      return () => request.cancel()
     }
   }, [state.submitCount])
 
   function handleSubmit(e) {
     e.preventDefault()
-    dispatch({ type: "usernameImmediately", value: state.username.value })
-    dispatch({
-      type: "usernameAfterDelay",
-      value: state.username.value,
-      noRequest: true
-    })
-    dispatch({ type: "emailImmediately", value: state.email.value })
-    dispatch({
-      type: "emailAfterDelay",
-      value: state.email.value,
-      noRequest: true
-    })
-    dispatch({ type: "passwordImmediately", value: state.password.value })
-    dispatch({ type: "passwordAfterDelay", value: state.password.value })
+    if (state.username.isUnique && state.email.isUnique) {
+      dispatch({ type: "usernameImmediately", value: state.username.value })
+      dispatch({
+        type: "usernameAfterDelay",
+        value: state.username.value,
+        noRequest: true
+      })
+      dispatch({ type: "emailImmediately", value: state.email.value })
+      dispatch({
+        type: "emailAfterDelay",
+        value: state.email.value,
+        noRequest: true
+      })
+      dispatch({ type: "passwordImmediately", value: state.password.value })
+      dispatch({ type: "passwordAfterDelay", value: state.password.value })
 
-    dispatch({ type: "submitForm" })
+      dispatch({ type: "submitForm" })
+    }
   }
 
   return (

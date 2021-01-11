@@ -57,6 +57,12 @@
   color: red;
 }
 
+.form-wrapper .wrong-credentials-message {
+  background: red;
+  border-radius: 10px;
+  text-align: center;
+}
+
 .form-wrapper button {
   margin-top: 30px;
   font-size: 50px;
