@@ -1,6 +1,6 @@
 import React, { useEffect } from "react"
 import ReactDOM from "react-dom"
-import { BrowserRouter, Switch, Route } from "react-router-dom"
+import { BrowserRouter, Switch, Route, Redirect } from "react-router-dom"
 import { useImmerReducer } from "use-immer"
 import OrderTable from "./components/OrderTable"
 import Loggin from "./components/Loggin"
@@ -9,6 +9,7 @@ import GuardedRoute from "./GuardedRoute"
 import StateContext from "./StateContext"
 import DispatchContext from "./DispatchContext"
 import Axios from "axios"
+import OrderMenu from "./components/OrderMenu"
 
 Axios.defaults.baseURL = "http://localhost:5000"
 
@@ -64,6 +65,14 @@ function Main() {
               component={OrderTable}
               path="/"
               exact
+            ></GuardedRoute>
+            <Route path="/order" exact>
+              <Redirect to="/order/drinks" />
+            </Route>
+            <GuardedRoute
+              auth={state.loggedIn}
+              component={OrderMenu}
+              path="/order"
             ></GuardedRoute>
           </Switch>
         </BrowserRouter>

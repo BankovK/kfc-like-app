@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react"
+import { withRouter } from "react-router-dom"
 import moment from "moment"
 
 //hardcoded orders
@@ -12,7 +13,7 @@ for (let index = 0; index < 80; index++) {
   })
 }
 
-function OrderTable() {
+function OrderTable(props) {
   const orderLog = useRef(null)
   const status = Object.freeze({
     ACCEPTED: 0,
@@ -66,9 +67,14 @@ function OrderTable() {
           <tbody>{renderTable()}</tbody>
         </table>
       </div>
-      <button className="new-order-button">New Order</button>
+      <button
+        className="new-order-button"
+        onClick={() => props.history.push("/order/drinks")}
+      >
+        New Order
+      </button>
     </>
   )
 }
 
-export default OrderTable
+export default withRouter(OrderTable)

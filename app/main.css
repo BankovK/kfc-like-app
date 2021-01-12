@@ -58,7 +58,7 @@
 }
 
 .form-wrapper .wrong-credentials-message {
-  background: red;
+  background-color: red;
   border-radius: 10px;
   text-align: center;
 }
@@ -80,4 +80,71 @@
   left: 50%;
   margin-right: -50%;
   transform: translate(-50%, -50%);
+}
+
+.order-menu-container {
+  float: left;
+  width: 80%;
+}
+
+.order-menu-navbar {
+  background: black;
+  padding: 10px;
+}
+
+.order-menu-navbar .navbar-element {
+  background-color: red;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 30px;
+  color: #000000;
+  text-decoration: none;
+  margin-left: 20px;
+}
+
+.order-menu-navbar .link-active {
+  background-color: white;
+  color: black;
+}
+
+.order-menu-table thead {
+  text-align: left;
+  background-color: #bf1f1f;
+}
+
+.order-menu-table tbody tr:hover {
+  background-color: black;
+  color: white;
+  cursor: pointer;
+}
+
+.order-menu-table {
+  table-layout: fixed;
+  width: 100%;
+  font: 32px "Times New Roman";
+  border-collapse: collapse;
+}
+
+.order-menu-basket h4 {
+  text-align: center;
+  font-size: 30px;
+  color: white;
+  background-color: black;
+}
+
+.order-menu-basket thead {
+  background-color: black;
+  color: white;
+}
+
+.order-menu-basket table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.order-menu-basket {
+  background: red;
+  float: right;
+  width: 20%;
 }
