@@ -1,20 +1,12 @@
-import React, { useEffect, useRef } from "react"
+import React, { useEffect, useContext, useRef } from "react"
 import { withRouter } from "react-router-dom"
+import { useImmer } from "use-immer"
+import Axios from "axios"
 import moment from "moment"
-
-//hardcoded orders
-const orders = []
-for (let index = 0; index < 80; index++) {
-  orders.push({
-    id: index,
-    name: "Client " + index,
-    created: Date.now() - Math.floor(Math.random() * 10000),
-    status: Math.floor(Math.random() * 4)
-  })
-}
+import io from "socket.io-client"
+import StateContext from "../StateContext"
 
 function OrderTable(props) {
-  const orderLog = useRef(null)
   const status = Object.freeze({
     ACCEPTED: 0,
     COOCKING: 1,
@@ -22,31 +14,107 @@ function OrderTable(props) {
     READY: 3
   })
 
+  const appState = useContext(StateContext)
+  const orderLog = useRef(null)
+  const socket = useRef(null)
+  const [state, setState] = useImmer({ orders: [] })
+
   useEffect(() => {
-    orderLog.current.scrollTop = orderLog.current.scrollHeight
+    const request = Axios.CancelToken.source()
+    async function sendRequest() {
+      try {
+        const response = await Axios.get("/api/orders", {
+          cancelToken: request.token
+        })
+        setState(draft => {
+          draft.orders = response.data
+        })
+      } catch (error) {
+        console.log("Request failed or was cancelled.")
+      }
+    }
+    sendRequest()
+
+    socket.current = io("http://localhost:5000")
+
+    socket.current.on("orderFromServer", order => {
+      console.log(order)
+      console.log(state.orders)
+      setState(draft => {
+        draft.orders.push(order)
+      })
+    })
+
+    socket.current.on("updateOrderFromServer", order => {
+      console.log("here", order)
+      console.log(state.orders)
+      setState(draft => {
+        draft.orders[draft.orders.findIndex(ord => ord.id === order.id)] = order
+      })
+    })
+
+    return () => {
+      request.cancel()
+      socket.current.disconnect()
+    }
   }, [])
 
-  function renderOrderStatus(value) {
-    switch (value) {
-      case status.ACCEPTED:
-        return "Accepted"
-      case status.COOCKING:
-        return "Coocking"
-      case status.PACKAGING:
-        return "Packaging"
-      case status.READY:
-        return "Ready"
+  useEffect(() => {
+    orderLog.current.scrollTop = orderLog.current.scrollHeight
+  }, [state.orders])
+
+  async function changeStatus(order, newStatus) {
+    try {
+      const response = await Axios.post(`/api/orders/${order.id}/edit`, {
+        order: { ...order, status: newStatus },
+        token: appState.user.token
+      })
+      socket.current.emit("updateOrderFromBrowser", {
+        order: response.data.order,
+        token: appState.user.token
+      })
+      setState(draft => {
+        draft.orders[
+          draft.orders.findIndex(ord => ord.id === response.data.order.id)
+        ] = response.data.order
+      })
+    } catch (error) {
+      console.log("Request failed or was cancelled.")
     }
   }
 
+  // function renderOrderStatus(value) {
+  //   switch (value) {
+  //     case status.ACCEPTED:
+  //       return "Accepted"
+  //     case status.COOCKING:
+  //       return "Coocking"
+  //     case status.PACKAGING:
+  //       return "Packaging"
+  //     case status.READY:
+  //       return "Ready"
+  //   }
+  // }
+
   function renderTable() {
-    orders.sort((order1, order2) => order1.created - order2.created)
-    return orders.map(order => {
+    console.log(state.orders)
+    return state.orders.map(order => {
       return (
         <tr key={order.id}>
-          <td>{order.name}</td>
-          <td>{moment(order.created).format("hh:mm:ss")}</td>
-          <td>{renderOrderStatus(order.status)}</td>
+          <td>{order.username}</td>
+          <td>{moment(order.created_at).format("hh:mm:ss a")}</td>
+          <td>
+            {/* {renderOrderStatus(order.status)} */}
+            <select
+              value={order.status}
+              onChange={e => changeStatus(order, e.target.value)}
+            >
+              <option value={status.ACCEPTED}>Accepted</option>
+              <option value={status.COOCKING}>Coocking</option>
+              <option value={status.PACKAGING}>Packaging</option>
+              <option value={status.READY}>Ready</option>
+            </select>
+          </td>
         </tr>
       )
     })

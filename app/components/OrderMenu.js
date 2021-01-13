@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useContext } from "react"
+import React, { useEffect, useState, useContext, useRef } from "react"
 import Axios from "axios"
-import { NavLink, withRouter } from "react-router-dom"
+import { NavLink, withRouter, useLocation } from "react-router-dom"
 import StateContext from "../StateContext"
+import io from "socket.io-client"
 
 function OrderMenu(props) {
   const type = Object.freeze({
@@ -9,15 +10,26 @@ function OrderMenu(props) {
     MAIN: 1,
     DESERTS: 2
   })
+
+  const location = useLocation()
+  const socket = useRef(null)
   const appState = useContext(StateContext)
   const [productType, setProductType] = useState(type.DRINKS)
   const [products, setProducts] = useState([])
   const [basketProducts, setBasketProducts] = useState([])
+  const [basketPrice, setBasketPrice] = useState(0.0)
 
   useEffect(() => {
-    if (window.location.href.search("maindishes") !== -1) {
+    socket.current = io("http://localhost:5000")
+    return () => {
+      socket.current.disconnect()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (location.pathname.search("maindishes") !== -1) {
       setProductType(type.MAIN)
-    } else if (window.location.href.search("deserts") !== -1) {
+    } else if (location.pathname.search("deserts") !== -1) {
       setProductType(type.DESERTS)
     } else {
       setProductType(type.DRINKS)
@@ -38,26 +50,34 @@ function OrderMenu(props) {
     return () => request.cancel()
   }, [])
 
-  function handleSubmitOrder(e) {
+  useEffect(() => {
+    let totalPrice = 0.0
+    products.forEach(product => {
+      let prod = basketProducts.find(prod => prod.id === product.id)
+      if (prod) {
+        totalPrice = totalPrice + product.price * prod.quantity
+      }
+    })
+    setBasketPrice(totalPrice)
+  }, [basketProducts])
+
+  async function handleSubmitOrder(e) {
     e.preventDefault()
-    const request = Axios.CancelToken.source()
-    async function sendRequest() {
+    if (basketProducts.length !== 0) {
       try {
-        await Axios.post(
-          "/api/orders",
-          {
-            token: appState.user.token,
-            basket: basketProducts
-          },
-          { cancelToken: request.token }
-        )
+        const response = await Axios.post("/api/orders", {
+          token: appState.user.token,
+          basket: basketProducts
+        })
+        socket.current.emit("orderFromBrowser", {
+          order: response.data.order,
+          token: appState.user.token
+        })
         props.history.push("/")
       } catch (error) {
         console.log("Request failed or was cancelled.")
       }
     }
-    sendRequest()
-    return () => request.cancel()
   }
 
   function renderProducts() {
@@ -138,6 +158,9 @@ function OrderMenu(props) {
     <>
       <div className="order-menu-container">
         <div className="order-menu-navbar">
+          <NavLink to="/" className="navbar-element">
+            🢀
+          </NavLink>
           <NavLink
             to="/order/drinks"
             className="navbar-element"
@@ -193,7 +216,10 @@ function OrderMenu(props) {
             <tbody>{renderBasket()}</tbody>
           </table>
         )}
-        <button onClick={handleSubmitOrder}>Order</button>
+        <div className="order-menu-basket-total">
+          Total price: {basketPrice}{" "}
+          <button onClick={handleSubmitOrder}>Order</button>
+        </div>
       </div>
     </>
   )
