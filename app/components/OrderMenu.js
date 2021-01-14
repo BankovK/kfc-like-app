@@ -20,13 +20,6 @@ function OrderMenu(props) {
   const [basketPrice, setBasketPrice] = useState(0.0)
 
   useEffect(() => {
-    socket.current = io("http://localhost:5000")
-    return () => {
-      socket.current.disconnect()
-    }
-  }, [])
-
-  useEffect(() => {
     if (location.pathname.search("maindishes") !== -1) {
       setProductType(type.MAIN)
     } else if (location.pathname.search("deserts") !== -1) {
@@ -47,7 +40,17 @@ function OrderMenu(props) {
       }
     }
     sendRequest()
-    return () => request.cancel()
+
+    socket.current = io("http://localhost:5000")
+
+    socket.current.on("createdOrderFromServer", order => {
+      if (order.client_id === +appState.user.user_id) props.history.push("/")
+    })
+
+    return () => {
+      request.cancel()
+      socket.current.disconnect()
+    }
   }, [])
 
   useEffect(() => {
@@ -64,19 +67,10 @@ function OrderMenu(props) {
   async function handleSubmitOrder(e) {
     e.preventDefault()
     if (basketProducts.length !== 0) {
-      try {
-        const response = await Axios.post("/api/orders", {
-          token: appState.user.token,
-          basket: basketProducts
-        })
-        socket.current.emit("orderFromBrowser", {
-          order: response.data.order,
-          token: appState.user.token
-        })
-        props.history.push("/")
-      } catch (error) {
-        console.log("Request failed or was cancelled.")
-      }
+      socket.current.emit("createdOrderFromBrowser", {
+        basket: basketProducts,
+        token: appState.user.token
+      })
     }
   }
 

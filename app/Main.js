@@ -19,7 +19,8 @@ function Main() {
     user: {
       token: localStorage.getItem("token"),
       username: localStorage.getItem("username"),
-      is_admin: localStorage.getItem("isAdmin")
+      user_id: localStorage.getItem("userId"),
+      is_admin: localStorage.getItem("isAdmin") == "1" ? true : false
     }
   }
 
@@ -27,7 +28,10 @@ function Main() {
     switch (action.type) {
       case "login":
         draft.loggedIn = true
-        draft.user = action.data
+        draft.user = {
+          ...action.data,
+          is_admin: action.data.is_admin == "1" ? true : false
+        }
         break
       case "logout":
         draft.loggedIn = false
@@ -40,10 +44,12 @@ function Main() {
   useEffect(() => {
     if (state.loggedIn) {
       localStorage.setItem("token", state.user.token)
+      localStorage.setItem("userId", state.user.user_id)
       localStorage.setItem("username", state.user.username)
-      localStorage.setItem("isAdmin", state.user.is_admin)
+      localStorage.setItem("isAdmin", state.user.is_admin ? 1 : 0)
     } else {
       localStorage.removeItem("token")
+      localStorage.removeItem("userId")
       localStorage.removeItem("username")
       localStorage.removeItem("isAdmin")
     }

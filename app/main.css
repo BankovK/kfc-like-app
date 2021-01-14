@@ -20,6 +20,10 @@
   text-align: center;
 }
 
+.order-table select {
+  font-size: 28px;
+}
+
 .order-table {
   width: 100%;
   font: 32px "Times New Roman";
@@ -141,6 +145,7 @@
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
+  text-align: center;
 }
 
 .order-menu-basket-total {

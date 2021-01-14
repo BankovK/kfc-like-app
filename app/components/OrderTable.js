@@ -37,19 +37,24 @@ function OrderTable(props) {
 
     socket.current = io("http://localhost:5000")
 
-    socket.current.on("orderFromServer", order => {
+    socket.current.on("createdOrderFromServer", order => {
       console.log(order)
-      console.log(state.orders)
       setState(draft => {
         draft.orders.push(order)
       })
     })
 
-    socket.current.on("updateOrderFromServer", order => {
-      console.log("here", order)
-      console.log(state.orders)
+    socket.current.on("updatedOrderFromServer", order => {
+      console.log(order)
       setState(draft => {
         draft.orders[draft.orders.findIndex(ord => ord.id === order.id)] = order
+      })
+    })
+
+    socket.current.on("deletedOrdersFromServer", orders => {
+      console.log(orders)
+      setState(draft => {
+        draft.orders = draft.orders.filter(order => !orders.includes(order.id))
       })
     })
 
@@ -63,58 +68,53 @@ function OrderTable(props) {
     orderLog.current.scrollTop = orderLog.current.scrollHeight
   }, [state.orders])
 
-  async function changeStatus(order, newStatus) {
-    try {
-      const response = await Axios.post(`/api/orders/${order.id}/edit`, {
-        order: { ...order, status: newStatus },
-        token: appState.user.token
-      })
-      socket.current.emit("updateOrderFromBrowser", {
-        order: response.data.order,
-        token: appState.user.token
-      })
-      setState(draft => {
-        draft.orders[
-          draft.orders.findIndex(ord => ord.id === response.data.order.id)
-        ] = response.data.order
-      })
-    } catch (error) {
-      console.log("Request failed or was cancelled.")
+  function changeStatus(order, newStatus) {
+    socket.current.emit("updatedOrderFromBrowser", {
+      order: { ...order, status: newStatus },
+      token: appState.user.token
+    })
+    setState(draft => {
+      draft.orders[draft.orders.findIndex(ord => ord.id === order.id)] = {
+        ...order,
+        status: newStatus
+      }
+    })
+  }
+
+  function renderOrderStatus(userIsAdmin, order) {
+    if (userIsAdmin) {
+      return (
+        <select
+          value={order.status}
+          onChange={e => changeStatus(order, e.target.value)}
+        >
+          <option value={status.ACCEPTED}>Accepted</option>
+          <option value={status.COOCKING}>Coocking</option>
+          <option value={status.PACKAGING}>Packaging</option>
+          <option value={status.READY}>Ready</option>
+        </select>
+      )
+    }
+    switch (order.status) {
+      case status.ACCEPTED:
+        return "Accepted"
+      case status.COOCKING:
+        return "Coocking"
+      case status.PACKAGING:
+        return "Packaging"
+      case status.READY:
+        return "Ready"
     }
   }
 
-  // function renderOrderStatus(value) {
-  //   switch (value) {
-  //     case status.ACCEPTED:
-  //       return "Accepted"
-  //     case status.COOCKING:
-  //       return "Coocking"
-  //     case status.PACKAGING:
-  //       return "Packaging"
-  //     case status.READY:
-  //       return "Ready"
-  //   }
-  // }
-
   function renderTable() {
-    console.log(state.orders)
+    let userIsAdmin = appState.user.is_admin
     return state.orders.map(order => {
       return (
         <tr key={order.id}>
           <td>{order.username}</td>
           <td>{moment(order.created_at).format("hh:mm:ss a")}</td>
-          <td>
-            {/* {renderOrderStatus(order.status)} */}
-            <select
-              value={order.status}
-              onChange={e => changeStatus(order, e.target.value)}
-            >
-              <option value={status.ACCEPTED}>Accepted</option>
-              <option value={status.COOCKING}>Coocking</option>
-              <option value={status.PACKAGING}>Packaging</option>
-              <option value={status.READY}>Ready</option>
-            </select>
-          </td>
+          <td>{renderOrderStatus(userIsAdmin, order)}</td>
         </tr>
       )
     })
