@@ -1,3 +1,8 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
 .table-header {
   font-size: 50px;
   text-align: center;
@@ -87,16 +92,20 @@
 }
 
 .order-menu-container {
-  float: left;
+  float: right;
   width: 80%;
 }
 
 .order-menu-navbar {
+  display: block;
+  overflow: hidden;
   background: black;
   padding: 10px;
 }
 
-.order-menu-navbar .navbar-element {
+.navbar-element {
+  display: block;
+  float: left;
   background-color: red;
   padding: 10px;
   border-radius: 10px;
@@ -106,14 +115,73 @@
   margin-left: 20px;
 }
 
-.order-menu-navbar .link-active {
-  background-color: white;
-  color: black;
+.navbar-element:last-child {
+  float: right;
+  margin-left: 0;
+  margin-right: 20px;
+  user-select: none;
 }
 
-.order-menu-table thead {
-  text-align: left;
+.navbar-element:last-child:active,
+.navbar-element:last-child:hover {
+  background-color: white;
+  color: black;
+  cursor: pointer;
+}
+
+.order-menu-navbar a {
+  height: 34px;
+}
+
+.order-menu-navbar a span {
+  position: relative;
+  top: -13%;
+}
+
+.order-menu-navbar .menu-dropdown-button:hover,
+.order-menu-navbar .menu-dropdown-button:active,
+.order-menu-navbar .menu-dropdown-button-active {
+  background-color: white;
+  color: black;
+  user-select: none;
+}
+
+.order-menu-navbar .menu-dropdown-button {
+  cursor: pointer;
+  user-select: none;
+}
+
+.order-menu-navbar .link-active {
+  background-color: black;
+  color: white;
+}
+
+.loading-message {
+  text-align: center;
+  margin-top: 50px;
+  font-size: 32px;
+}
+
+.dropdown-menu {
+  position: absolute;
+  display: grid;
+  top: 63;
+  left: 104;
+}
+
+.dropdown-menu-element {
+  background-color: white;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 30px;
+  color: #000000;
+  text-decoration: none;
+}
+
+.order-menu-table th {
   background-color: #bf1f1f;
+  position: sticky;
+  top: 0;
 }
 
 .order-menu-table tbody tr:hover {
@@ -124,6 +192,7 @@
 
 .order-menu-table {
   table-layout: fixed;
+  text-align: center;
   width: 100%;
   font: 32px "Times New Roman";
   border-collapse: collapse;
@@ -148,13 +217,60 @@
   text-align: center;
 }
 
+.create-order-button:active {
+  background-color: white;
+  color: black;
+}
+
+.create-order-button {
+  background-color: black;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 30px;
+  color: white;
+  margin-left: 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
 .order-menu-basket-total {
-  margin: 10px;
-  font-size: 20px;
+  padding: 30px;
+  font-size: 30px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
 }
 
 .order-menu-basket {
   background: red;
-  float: right;
+  height: 100%;
   width: 20%;
+  position: fixed;
+}
+
+.product-grid {
+  list-style-type: none;
+}
+
+.product-cell {
+  width: 10%;
+  height: 240px;
+  float: left;
+  position: relative;
+  text-align: center;
+}
+
+.product-cell:hover {
+  cursor: pointer;
+}
+
+.product-cell p {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.product-cell img {
+  display: block;
+  max-width: 100%;
 }
