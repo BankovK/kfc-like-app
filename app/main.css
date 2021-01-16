@@ -11,18 +11,27 @@
 .order-table-wrapper {
   width: 80%;
   margin-left: 10%;
-  height: 70%;
-  overflow-y: scroll;
+}
+
+.order-table tbody {
+  display: block;
+  height: calc(100vh - 250px);
+  overflow-y: auto;
 }
 
 .order-table th {
-  position: sticky;
   background-color: #bf1f1f;
-  top: 0;
 }
 
 .order-table tr {
+  display: flex;
   text-align: center;
+}
+
+.order-table td,
+.order-table th {
+  flex-basis: 100%;
+  flex-grow: 2;
 }
 
 .order-table select {
@@ -190,6 +199,10 @@
   cursor: pointer;
 }
 
+.order-menu-table tbody tr {
+  word-wrap: break-word;
+}
+
 .order-menu-table {
   table-layout: fixed;
   text-align: center;
@@ -228,17 +241,22 @@
   border-radius: 10px;
   font-size: 30px;
   color: white;
-  margin-left: 20px;
   cursor: pointer;
   user-select: none;
 }
 
 .order-menu-basket-total {
-  padding: 30px;
+  padding-bottom: 30px;
   font-size: 30px;
   position: absolute;
   bottom: 0;
-  width: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.order-menu-basket-total div:last-child {
+  padding: 10px;
 }
 
 .order-menu-basket {
@@ -246,6 +264,23 @@
   height: 100%;
   width: 20%;
   position: fixed;
+}
+
+.order-menu-basket tbody {
+  display: block;
+  height: calc(100vh - 300px);
+  overflow-y: auto;
+}
+
+.order-menu-basket td,
+.order-menu-basket th {
+  flex-basis: 100%;
+  flex-grow: 2;
+}
+
+.order-menu-basket tr {
+  display: flex;
+  text-align: center;
 }
 
 .product-grid {
@@ -271,6 +306,6 @@
 }
 
 .product-cell img {
-  display: block;
   max-width: 100%;
+  max-height: 50%;
 }

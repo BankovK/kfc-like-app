@@ -123,7 +123,7 @@ function OrderTable(props) {
   return (
     <>
       <h1 className="table-header">Orders Table</h1>
-      <div id="orderLog" ref={orderLog} className="order-table-wrapper">
+      <div className="order-table-wrapper">
         <table className="order-table">
           <thead>
             <tr>
@@ -132,12 +132,12 @@ function OrderTable(props) {
               <th>Status</th>
             </tr>
           </thead>
-          <tbody>{renderTable()}</tbody>
+          <tbody ref={orderLog}>{renderTable()}</tbody>
         </table>
       </div>
       <button
         className="new-order-button"
-        onClick={() => props.history.push("/order/drinks")}
+        onClick={() => props.history.push("/order/dummy")}
       >
         New Order
       </button>

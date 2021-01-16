@@ -73,12 +73,12 @@ function Main() {
               exact
             ></GuardedRoute>
             <Route path="/order" exact>
-              <Redirect to="/order/drinks" />
+              <Redirect to="/order/dummy" />
             </Route>
             <GuardedRoute
               auth={state.loggedIn}
               component={OrderMenu}
-              path="/order"
+              path="/order/:type"
             ></GuardedRoute>
           </Switch>
         </BrowserRouter>

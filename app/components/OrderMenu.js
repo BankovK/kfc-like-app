@@ -1,24 +1,19 @@
 import React, { useEffect, useContext, useRef } from "react"
 import Axios from "axios"
-import { NavLink, withRouter, useLocation } from "react-router-dom"
+import { NavLink, withRouter, useParams } from "react-router-dom"
 import StateContext from "../StateContext"
 import io from "socket.io-client"
 import { useImmer } from "use-immer"
 
 function OrderMenu(props) {
-  const type = Object.freeze({
-    DRINKS: 0,
-    MAIN: 1,
-    DESERTS: 2
-  })
-
+  const { type } = useParams()
   const dropdownMenu = useRef(null)
-  const location = useLocation()
   const socket = useRef(null)
   const appState = useContext(StateContext)
   const [state, setState] = useImmer({
-    productType: type.DRINKS,
+    currentProductType: {},
     products: [],
+    productTypes: [],
     basketProducts: [],
     basketPrice: 0.0,
 
@@ -28,23 +23,26 @@ function OrderMenu(props) {
   })
 
   useEffect(() => {
-    if (location.pathname.search("maindishes") !== -1) {
-      setProductCategory(type.MAIN, "Main Dishes")
-    } else if (location.pathname.search("deserts") !== -1) {
-      setProductCategory(type.DESERTS, "Deserts")
-    } else {
-      setProductCategory(type.DRINKS, "Drinks")
-    }
-
     const request = Axios.CancelToken.source()
     async function sendRequest() {
       try {
         const response = await Axios.get("/api/products", {
           cancelToken: request.token
         })
+        let chosenType
+        if (type === "dummy") {
+          chosenType = response.data.types[0]
+        } else {
+          chosenType = response.data.types.find(el => el.forUrl === type)
+        }
         setState(draft => {
-          draft.products = response.data
+          draft.products = response.data.products
+          draft.productTypes = response.data.types
+          draft.currentProductType = chosenType
         })
+        if (type === "dummy") {
+          props.history.push(`/order/${chosenType.forUrl}`)
+        }
       } catch (error) {
         console.log("Request failed or was cancelled.")
       }
@@ -78,6 +76,12 @@ function OrderMenu(props) {
     })
   }, [state.basketProducts])
 
+  useEffect(() => {
+    if (state.showDropdown) {
+      document.addEventListener("click", closeDropdown)
+    }
+  }, [state.showDropdown])
+
   async function handleSubmitOrder(e) {
     e.preventDefault()
     if (state.basketProducts.length !== 0) {
@@ -86,6 +90,24 @@ function OrderMenu(props) {
         token: appState.user.token
       })
     }
+  }
+
+  function renderDropdownMenu() {
+    return state.productTypes.map(productType => (
+      <NavLink
+        key={productType.forUrl}
+        to={"/order/" + productType.forUrl}
+        className="dropdown-menu-element"
+        activeClassName="link-active"
+        onClick={() =>
+          setState(draft => {
+            draft.currentProductType = productType
+          })
+        }
+      >
+        {productType.capitalized}
+      </NavLink>
+    ))
   }
 
   function renderProducts() {
@@ -101,7 +123,7 @@ function OrderMenu(props) {
           </thead>
           <tbody>
             {state.products.map(product => {
-              if (product.type === state.productType)
+              if (product.type === state.currentProductType.forUrl)
                 return (
                   <tr
                     key={product.id}
@@ -134,7 +156,7 @@ function OrderMenu(props) {
       return (
         <ul className="product-grid">
           {state.products.map(product => {
-            if (product.type === state.productType)
+            if (product.type === state.currentProductType.forUrl)
               return (
                 <li
                   key={product.id}
@@ -206,13 +228,6 @@ function OrderMenu(props) {
     })
   }
 
-  function setProductCategory(productType, shownCategory) {
-    setState(draft => {
-      draft.productType = productType
-      draft.shownCategory = shownCategory
-    })
-  }
-
   function closeDropdown(e) {
     e.preventDefault()
     // To prevent dropdown from closing when clicked on it.
@@ -223,12 +238,6 @@ function OrderMenu(props) {
     document.removeEventListener("click", closeDropdown)
     // }
   }
-
-  useEffect(() => {
-    if (state.showDropdown) {
-      document.addEventListener("click", closeDropdown)
-    }
-  }, [state.showDropdown])
 
   return (
     <>
@@ -250,35 +259,12 @@ function OrderMenu(props) {
               })
             }
           >
-            {state.shownCategory}
+            {state.currentProductType.capitalized}
           </span>
 
           {state.showDropdown && (
             <div ref={dropdownMenu} className="dropdown-menu">
-              <NavLink
-                to="/order/drinks"
-                className="dropdown-menu-element"
-                activeClassName="link-active"
-                onClick={() => setProductCategory(type.DRINKS, "Drinks")}
-              >
-                Drinks
-              </NavLink>
-              <NavLink
-                to="/order/maindishes"
-                className="dropdown-menu-element"
-                activeClassName="link-active"
-                onClick={() => setProductCategory(type.MAIN, "Main Dishes")}
-              >
-                Main Dishes
-              </NavLink>
-              <NavLink
-                to="/order/deserts"
-                className="dropdown-menu-element"
-                activeClassName="link-active"
-                onClick={() => setProductCategory(type.DESERTS, "Deserts")}
-              >
-                Desert
-              </NavLink>
+              {renderDropdownMenu()}
             </div>
           )}
           <span
@@ -310,10 +296,12 @@ function OrderMenu(props) {
           </table>
         )}
         <div className="order-menu-basket-total">
-          Total price: {state.basketPrice}${" "}
-          <span className="create-order-button" onClick={handleSubmitOrder}>
-            Order
-          </span>
+          <div>Total price: {state.basketPrice}$ </div>
+          <div>
+            <span className="create-order-button" onClick={handleSubmitOrder}>
+              Order
+            </span>
+          </div>
         </div>
       </div>
       <div className="order-menu-container">
