@@ -3,7 +3,7 @@ import ReactDOM from "react-dom"
 import { BrowserRouter, Switch, Route, Redirect } from "react-router-dom"
 import { useImmerReducer } from "use-immer"
 import OrderTable from "./components/OrderTable"
-import Loggin from "./components/Loggin"
+import Login from "./components/Login"
 import Register from "./components/Register"
 import GuardedRoute from "./GuardedRoute"
 import StateContext from "./StateContext"
@@ -61,7 +61,7 @@ function Main() {
         <BrowserRouter>
           <Switch>
             <Route path="/login">
-              <Loggin />
+              <Login />
             </Route>
             <Route path="/register">
               <Register />

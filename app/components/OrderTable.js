@@ -17,7 +17,7 @@ function OrderTable(props) {
   const appState = useContext(StateContext)
   const orderLog = useRef(null)
   const socket = useRef(null)
-  const [state, setState] = useImmer({ orders: [] })
+  const [state, setState] = useImmer({ orders: [], isFailedToLoad: false })
 
   useEffect(() => {
     const request = Axios.CancelToken.source()
@@ -31,6 +31,9 @@ function OrderTable(props) {
         })
       } catch (error) {
         console.log("Request failed or was cancelled.")
+        setState(draft => {
+          draft.isFailedToLoad = true
+        })
       }
     }
     sendRequest()
@@ -65,7 +68,9 @@ function OrderTable(props) {
   }, [])
 
   useEffect(() => {
-    orderLog.current.scrollTop = orderLog.current.scrollHeight
+    if (state.orders.length !== 0) {
+      orderLog.current.scrollTop = orderLog.current.scrollHeight
+    }
   }, [state.orders])
 
   function changeStatus(order, newStatus) {
@@ -123,18 +128,28 @@ function OrderTable(props) {
   return (
     <>
       <h1 className="table-header">Orders Table</h1>
-      <div className="order-table-wrapper">
-        <table className="order-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Time Ordered</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody ref={orderLog}>{renderTable()}</tbody>
-        </table>
-      </div>
+      {state.isFailedToLoad ? (
+        <div className="filler-message">
+          <span className="failed-to-load-message">Failed To Load.</span>
+        </div>
+      ) : state.orders.length !== 0 ? (
+        <div className="order-table-wrapper">
+          <table className="order-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Time Ordered</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody ref={orderLog}>{renderTable()}</tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="filler-message">
+          <span className="loading-message">Loading...</span>
+        </div>
+      )}
       <button
         className="new-order-button"
         onClick={() => props.history.push("/order/dummy")}

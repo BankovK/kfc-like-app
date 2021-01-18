@@ -75,7 +75,13 @@
   color: red;
 }
 
-.form-wrapper .wrong-credentials-message {
+.form-wrapper .request-message-loading {
+  background-color: yellow;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.form-wrapper .request-message-failed {
   background-color: red;
   border-radius: 10px;
   text-align: center;
@@ -165,10 +171,22 @@
   color: white;
 }
 
-.loading-message {
+.filler-message {
   text-align: center;
   margin-top: 50px;
   font-size: 32px;
+}
+
+.filler-message .loading-message {
+  background-color: yellow;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.filler-message .failed-to-load-message {
+  background-color: red;
+  border-radius: 10px;
+  padding: 10px;
 }
 
 .dropdown-menu {

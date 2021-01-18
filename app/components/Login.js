@@ -4,7 +4,7 @@ import { useImmerReducer } from "use-immer"
 import { withRouter } from "react-router-dom"
 import DispatchContext from "../DispatchContext"
 
-function Loggin(props) {
+function Login(props) {
   const appDispatch = useContext(DispatchContext)
 
   const initialState = {
@@ -18,14 +18,18 @@ function Loggin(props) {
       isInvalid: false,
       message: ""
     },
-    errorMessage: "",
+    formMessage: {
+      isError: false,
+      message: ""
+    },
     submitCount: 0
   }
 
   function registrationFormReducer(draft, action) {
     switch (action.type) {
       case "usernameCheck":
-        draft.errorMessage = ""
+        draft.formMessage.isError = false
+        draft.formMessage.message = ""
         draft.username.isInvalid = false
         draft.username.value = action.value
         if (draft.username.value.length === 0) {
@@ -34,7 +38,8 @@ function Loggin(props) {
         }
         break
       case "passwordCheck":
-        draft.errorMessage = ""
+        draft.formMessage.isError = false
+        draft.formMessage.message = ""
         draft.password.isInvalid = false
         draft.password.value = action.value
         if (draft.password.value.length === 0) {
@@ -42,8 +47,9 @@ function Loggin(props) {
           draft.password.message = "Provide a password."
         }
         break
-      case "setErrorMessage":
-        draft.errorMessage = action.value
+      case "setMessage":
+        draft.formMessage.isError = action.isError
+        draft.formMessage.message = action.value
         break
       case "submitForm":
         if (!draft.username.isInvalid && !draft.password.isInvalid) {
@@ -60,6 +66,11 @@ function Loggin(props) {
 
   useEffect(() => {
     if (state.submitCount) {
+      dispatch({
+        type: "setMessage",
+        isError: false,
+        value: "Sending request..."
+      })
       const request = Axios.CancelToken.source()
       async function sendRequest() {
         try {
@@ -75,15 +86,11 @@ function Loggin(props) {
           appDispatch({ type: "login", data: response.data })
           props.history.push("/")
         } catch (error) {
-          if (error.response) {
-            console.log(error.response.data.message)
-            dispatch({
-              type: "setErrorMessage",
-              value: error.response.data.message
-            })
-          } else {
-            console.log("Request failed or was cancelled.")
-          }
+          dispatch({
+            type: "setMessage",
+            isError: true,
+            value: error.response ? error.response.data : error.message
+          })
         }
       }
       sendRequest()
@@ -135,8 +142,16 @@ function Loggin(props) {
           />
           {state.password.isInvalid && <small>{state.password.message}</small>}
         </div>
-        {state.errorMessage.length !== 0 && (
-          <div className="wrong-credentials-message">{state.errorMessage}</div>
+        {state.formMessage.message.length !== 0 && (
+          <div
+            className={
+              state.formMessage.isError
+                ? `request-message-failed`
+                : `request-message-loading`
+            }
+          >
+            {state.formMessage.message}
+          </div>
         )}
         <button type="button" onClick={() => props.history.push("/register")}>
           Register
@@ -147,4 +162,4 @@ function Loggin(props) {
   )
 }
 
-export default withRouter(Loggin)
+export default withRouter(Login)

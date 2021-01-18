@@ -13,6 +13,8 @@ function Register(props) {
       isInvalid: false,
       message: "",
       isUnique: false,
+      isChecked: false,
+      checkInProgress: false,
       checkCount: 0
     },
     email: {
@@ -20,11 +22,17 @@ function Register(props) {
       isInvalid: false,
       message: "",
       isUnique: false,
+      isChecked: false,
+      checkInProgress: false,
       checkCount: 0
     },
     password: {
       value: "",
       isInvalid: false,
+      message: ""
+    },
+    formMessage: {
+      isError: false,
       message: ""
     },
     submitCount: 0
@@ -33,6 +41,9 @@ function Register(props) {
   function registrationFormReducer(draft, action) {
     switch (action.type) {
       case "usernameImmediately":
+        draft.formMessage.isError = false
+        draft.formMessage.message = ""
+
         draft.username.isInvalid = false
         draft.username.value = action.value
         if (draft.username.value.length > 30) {
@@ -54,9 +65,27 @@ function Register(props) {
           draft.username.message =
             "Username must contain at least 3 characters."
         }
-        if (!draft.username.isInvalid && !action.noRequest) {
-          draft.username.checkCount++
+        if (!draft.username.isInvalid) {
+          if (!action.noRequest) {
+            draft.username.isChecked = false
+            draft.username.checkInProgress = true
+            draft.username.checkCount++
+          } else if (!draft.username.checkInProgress) {
+            if (!draft.username.isChecked) {
+              draft.username.isInvalid = true
+            } else if (!draft.username.isUnique) {
+              draft.username.isInvalid = true
+            }
+          } else {
+            draft.username.isInvalid = true
+            draft.username.message = "Wait to check if username is unique."
+          }
         }
+        break
+      case "usernameUniqueCheckFailed":
+        draft.username.checkInProgress = false
+        draft.username.isInvalid = true
+        draft.username.message = "Failed to check if username is unique."
         break
       case "usernameUniqueResults":
         if (action.value) {
@@ -66,19 +95,42 @@ function Register(props) {
         } else {
           draft.username.isUnique = true
         }
+        draft.username.checkInProgress = false
+        draft.username.isChecked = true
         break
       case "emailImmediately":
+        draft.formMessage.isError = false
+        draft.formMessage.message = ""
+
         draft.email.isInvalid = false
         draft.email.value = action.value
         break
       case "emailAfterDelay":
-        if (!/^\S+@\S+$/.test(draft.email.value)) {
+        if (!/^\S+@\S+.\S+$/.test(draft.email.value)) {
           draft.email.isInvalid = true
           draft.email.message = "You must provide a valid email address."
         }
-        if (!draft.email.isInvalid && !action.noRequest) {
-          draft.email.checkCount++
+        if (!draft.email.isInvalid) {
+          if (!action.noRequest) {
+            draft.email.isChecked = false
+            draft.email.checkInProgress = true
+            draft.email.checkCount++
+          } else if (!draft.email.checkInProgress) {
+            if (!draft.email.isChecked) {
+              draft.email.isInvalid = true
+            } else if (!draft.email.isUnique) {
+              draft.email.isInvalid = true
+            }
+          } else {
+            draft.email.isInvalid = true
+            draft.email.message = "Wait to check if email is unique."
+          }
         }
+        break
+      case "emailUniqueCheckFailed":
+        draft.email.checkInProgress = false
+        draft.email.isInvalid = true
+        draft.email.message = "Failed to check if email is unique."
         break
       case "emailUniqueResults":
         if (action.value) {
@@ -88,8 +140,13 @@ function Register(props) {
         } else {
           draft.email.isUnique = true
         }
+        draft.email.checkInProgress = false
+        draft.email.isChecked = true
         break
       case "passwordImmediately":
+        draft.formMessage.isError = false
+        draft.formMessage.message = ""
+
         draft.password.isInvalid = false
         draft.password.value = action.value
         if (draft.password.value.length > 50) {
@@ -103,6 +160,10 @@ function Register(props) {
           draft.password.message =
             "Password must contain at least 12 characters."
         }
+        break
+      case "setMessage":
+        draft.formMessage.isError = action.isError
+        draft.formMessage.message = action.value
         break
       case "submitForm":
         if (
@@ -143,7 +204,9 @@ function Register(props) {
           )
           dispatch({ type: "usernameUniqueResults", value: response.data })
         } catch (error) {
-          console.log("Request failed or was cancelled.")
+          dispatch({
+            type: "usernameUniqueCheckFailed"
+          })
         }
       }
       sendRequest()
@@ -170,7 +233,9 @@ function Register(props) {
           )
           dispatch({ type: "emailUniqueResults", value: response.data })
         } catch (error) {
-          console.log("Request failed or was cancelled.")
+          dispatch({
+            type: "emailUniqueCheckFailed"
+          })
         }
       }
       sendRequest()
@@ -190,6 +255,11 @@ function Register(props) {
 
   useEffect(() => {
     if (state.submitCount) {
+      dispatch({
+        type: "setMessage",
+        isError: false,
+        value: "Sending request..."
+      })
       const request = Axios.CancelToken.source()
       async function sendRequest() {
         try {
@@ -205,7 +275,11 @@ function Register(props) {
           appDispatch({ type: "login", data: response.data })
           props.history.push("/")
         } catch (error) {
-          console.log("Request failed or was cancelled.")
+          dispatch({
+            type: "setMessage",
+            isError: true,
+            value: "Request Failed."
+          })
         }
       }
       sendRequest()
@@ -215,24 +289,29 @@ function Register(props) {
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (state.username.isUnique && state.email.isUnique) {
-      dispatch({ type: "usernameImmediately", value: state.username.value })
-      dispatch({
-        type: "usernameAfterDelay",
-        value: state.username.value,
-        noRequest: true
-      })
-      dispatch({ type: "emailImmediately", value: state.email.value })
-      dispatch({
-        type: "emailAfterDelay",
-        value: state.email.value,
-        noRequest: true
-      })
-      dispatch({ type: "passwordImmediately", value: state.password.value })
-      dispatch({ type: "passwordAfterDelay", value: state.password.value })
 
-      dispatch({ type: "submitForm" })
+    let usernameIsChecked = true
+    let emailIsChecked = true
+    if (state.formMessage.isError) {
+      usernameIsChecked = false
+      emailIsChecked = false
     }
+    dispatch({ type: "usernameImmediately", value: state.username.value })
+    dispatch({
+      type: "usernameAfterDelay",
+      value: state.username.value,
+      noRequest: true
+    })
+    dispatch({ type: "emailImmediately", value: state.email.value })
+    dispatch({
+      type: "emailAfterDelay",
+      value: state.email.value,
+      noRequest: true
+    })
+    dispatch({ type: "passwordImmediately", value: state.password.value })
+    dispatch({ type: "passwordAfterDelay", value: state.password.value })
+
+    dispatch({ type: "submitForm" })
   }
 
   return (
@@ -289,6 +368,17 @@ function Register(props) {
           />
           {state.password.isInvalid && <small>{state.password.message}</small>}
         </div>
+        {state.formMessage.message.length !== 0 && (
+          <div
+            className={
+              state.formMessage.isError
+                ? `request-message-failed`
+                : `request-message-loading`
+            }
+          >
+            {state.formMessage.message}
+          </div>
+        )}
         <button type="submit">Register</button>
       </form>
     </div>

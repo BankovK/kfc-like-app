@@ -19,7 +19,9 @@ function OrderMenu(props) {
 
     showDropdown: false,
     shownCategory: "",
-    viewType: 0
+    viewType: 0,
+
+    isFailedToLoad: false
   })
 
   useEffect(() => {
@@ -45,6 +47,9 @@ function OrderMenu(props) {
         }
       } catch (error) {
         console.log("Request failed or was cancelled.")
+        setState(draft => {
+          draft.isFailedToLoad = true
+        })
       }
     }
     sendRequest()
@@ -247,20 +252,22 @@ function OrderMenu(props) {
             <span>🢀</span>
           </NavLink>
 
-          <span
-            className={
-              state.showDropdown
-                ? "navbar-element menu-dropdown-button-active"
-                : "navbar-element menu-dropdown-button"
-            }
-            onClick={() =>
-              setState(draft => {
-                draft.showDropdown = true
-              })
-            }
-          >
-            {state.currentProductType.capitalized}
-          </span>
+          {state.productTypes.length !== 0 && (
+            <span
+              className={
+                state.showDropdown
+                  ? "navbar-element menu-dropdown-button-active"
+                  : "navbar-element menu-dropdown-button"
+              }
+              onClick={() =>
+                setState(draft => {
+                  draft.showDropdown = true
+                })
+              }
+            >
+              {state.currentProductType.capitalized}
+            </span>
+          )}
 
           {state.showDropdown && (
             <div ref={dropdownMenu} className="dropdown-menu">
@@ -305,10 +312,16 @@ function OrderMenu(props) {
         </div>
       </div>
       <div className="order-menu-container">
-        {state.products.length !== 0 ? (
+        {state.isFailedToLoad ? (
+          <div className="filler-message">
+            <span className="failed-to-load-message">Failed To Load.</span>
+          </div>
+        ) : state.products.length !== 0 ? (
           renderProducts()
         ) : (
-          <div className="loading-message">Loading...</div>
+          <div className="filler-message">
+            <span className="loading-message">Loading...</span>
+          </div>
         )}
       </div>
     </>
